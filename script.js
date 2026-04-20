@@ -213,7 +213,11 @@ let menuBgmStarted = false;
 function tryStartMenuBgm() {
   if (menuBgmStarted) return;
   menuBgmStarted = true;
-  setBgm(BGM_MAIN, 0.7);
+  initAudioGraph();
+  if (audioCtx && audioCtx.state === 'suspended') {
+    audioCtx.resume().catch(() => {});
+  }
+  setBgm(BGM_MAIN, 'menu');
 }
 document.addEventListener('click', tryStartMenuBgm, { once: false });
 document.addEventListener('keydown', tryStartMenuBgm, { once: false });
@@ -379,23 +383,96 @@ function flashHudBtn(btn) {
 }
 
 // ────────────────────────────────────────────────────────────────
-// ระบบเสียง — BGM
+// ระบบเสียง — BGM with Mood Engine (Web Audio filter + rate + volume)
 // ────────────────────────────────────────────────────────────────
 const BGM_MAIN = 'assets/audio/The_Final_Ledger_Entry_90sec.mp3';
 
 const bgmPlayer  = new Audio();
 bgmPlayer.loop   = true;
 
-// Volume = master (user slider) × sceneMultiplier (mood)
+// Web Audio graph (lazy-init on first gesture)
+let audioCtx    = null;
+let bgmSource   = null;
+let bgmLowpass  = null;
+
+function initAudioGraph() {
+  if (audioCtx) return;
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+    audioCtx   = new Ctx();
+    bgmSource  = audioCtx.createMediaElementSource(bgmPlayer);
+    bgmLowpass = audioCtx.createBiquadFilter();
+    bgmLowpass.type = 'lowpass';
+    bgmLowpass.frequency.value = 20000; // start wide open
+    bgmLowpass.Q.value = 0.7;
+    bgmSource.connect(bgmLowpass);
+    bgmLowpass.connect(audioCtx.destination);
+  } catch (e) {
+    console.warn('Web Audio init failed; volume-only fallback:', e);
+  }
+}
+
+// Mood presets — vol × lowpass × playbackRate
+// lp (Hz): ต่ำ = หม่น/อู้อี้ (เหมือนฟังผ่านกำแพง) · สูง = ใส/เต็ม
+// rate: ต่ำ = หม่น/ยืด · สูง = กระชับ/ตื่นตัว
+const BGM_MOODS = {
+  menu:          { vol: 0.55, lp: 6000,  rate: 1.00 }, // เมนู — atmospheric
+  intro:         { vol: 0.55, lp: 3200,  rate: 1.00 }, // เริ่มคดี — ลึกลับ
+  investigation: { vol: 0.45, lp: 2400,  rate: 0.96 }, // วิเคราะห์ log — ช้าและ focus
+  discovery:     { vol: 0.70, lp: 5200,  rate: 1.02 }, // พบเบาะแส — เปิดใส ตื่นเต้น
+  sneak:         { vol: 0.48, lp: 1800,  rate: 0.97 }, // แอบส่องอีเมล — อู้อี้ ระมัดระวัง
+  confront:      { vol: 0.78, lp: 8500,  rate: 1.03 }, // กำลังเดินไปเผชิญหน้า
+  tension:       { vol: 0.88, lp: 12000, rate: 1.04 }, // เผชิญหน้า — ตึงเครียด
+  climax:        { vol: 1.00, lp: 20000, rate: 1.07 }, // ยื่นหลักฐาน — peak
+  resolution:    { vol: 0.50, lp: 1800,  rate: 0.92 }, // สารภาพ — หม่น เศร้า
+  reflection:    { vol: 0.40, lp: 1400,  rate: 0.90 }, // ethics dilemma — เงียบ คิด
+  victory:       { vol: 0.48, lp: 4800,  rate: 1.00 }, // good ending — สงบ สบาย
+  defeat:        { vol: 0.30, lp: 800,   rate: 0.85 }, // bad ending — พังทลาย
+};
+
 let masterVolume    = 0.55;
 let sceneMultiplier = 1.0;
+let currentMood     = null;
 
 function applyBgmVolume() {
   bgmPlayer.volume = state.isMuted ? 0 : masterVolume * sceneMultiplier;
 }
 
-function setBgm(path, multiplier = 1.0) {
-  sceneMultiplier = multiplier;
+function applyMood(moodName, durationMs = 1400) {
+  const mood = BGM_MOODS[moodName];
+  if (!mood) return;
+  currentMood = moodName;
+
+  // Playback rate (smooth ramp via setInterval — HTMLMediaElement doesn't have AudioParam)
+  const startRate = bgmPlayer.playbackRate || 1;
+  const steps  = 24;
+  const stepMs = durationMs / steps;
+  let i = 0;
+  const rateTick = setInterval(() => {
+    i++;
+    bgmPlayer.playbackRate = startRate + (mood.rate - startRate) * (i / steps);
+    if (i >= steps) {
+      bgmPlayer.playbackRate = mood.rate;
+      clearInterval(rateTick);
+    }
+  }, stepMs);
+
+  // Low-pass filter (Web Audio)
+  if (bgmLowpass && audioCtx) {
+    const now = audioCtx.currentTime;
+    bgmLowpass.frequency.cancelScheduledValues(now);
+    bgmLowpass.frequency.setValueAtTime(bgmLowpass.frequency.value, now);
+    bgmLowpass.frequency.linearRampToValueAtTime(mood.lp, now + durationMs / 1000);
+  }
+
+  // Volume
+  crossfadeToVolume(mood.vol);
+}
+
+function setBgm(path, mood = 'menu') {
+  const m = BGM_MOODS[mood] || BGM_MOODS.menu;
+  sceneMultiplier = m.vol;
   if (!path) {
     fadeOutBgm();
     return;
@@ -405,8 +482,12 @@ function setBgm(path, multiplier = 1.0) {
     bgmPlayer.src    = path;
     bgmPlayer.load();
   }
+  bgmPlayer.playbackRate = m.rate;
+  if (bgmLowpass) bgmLowpass.frequency.value = m.lp;
+  currentMood = mood;
   applyBgmVolume();
-  bgmPlayer.play().catch(() => {});
+  const pp = bgmPlayer.play();
+  if (pp) pp.catch(() => {});
 }
 
 function fadeOutBgm() {
@@ -424,11 +505,10 @@ function fadeOutBgm() {
   }, 60);
 }
 
-// Smoothly adjust only the multiplier (keeps track playing across scenes)
 function crossfadeToVolume(targetMultiplier) {
   const start = sceneMultiplier;
   const delta = targetMultiplier - start;
-  const steps = 20;
+  const steps = 24;
   let i = 0;
   const tick = setInterval(() => {
     i++;
@@ -603,9 +683,10 @@ function renderScene(sceneId) {
   setSpeaker(sceneData.speaker || sceneData.character || 'ระบบ');
 
   if ('bgm' in sceneData) {
-    setBgm(sceneData.bgm, sceneData.bgmVolume ?? 1.0);
+    setBgm(sceneData.bgm, sceneData.bgmMood || 'menu');
+  } else if (sceneData.bgmMood) {
+    applyMood(sceneData.bgmMood);
   } else if (sceneData.bgmVolume !== undefined) {
-    // Keep same track, just crossfade volume for mood change
     crossfadeToVolume(sceneData.bgmVolume);
   }
   if ('characterImage' in sceneData) setCharacterSprite(sceneData.characterImage);
