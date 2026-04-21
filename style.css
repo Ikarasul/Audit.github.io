@@ -681,8 +681,8 @@ html, body {
 .modal-panel {
   position: relative;
   z-index: 1;
-  width: min(680px, 94vw);
-  max-height: 80vh;
+  width: min(760px, 94vw);
+  max-height: 82vh;
   background: linear-gradient(145deg, #1e293b, #0f172a);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 20px;
@@ -752,16 +752,16 @@ html, body {
 .evidence-item {
   background: var(--bg-raised);
   border: 1px solid var(--border);
-  border-left: 3px solid var(--accent-dim);
+  border-left: 4px solid var(--accent-dim);
   border-radius: var(--radius-sm);
-  padding: 10px 14px;
+  padding: 12px 16px;
   font-family: var(--font-mono);
-  font-size: 0.82rem;
+  font-size: 0.86rem;
 }
 
 .evidence-item .ev-tag {
-  font-size: 0.65rem;
-  letter-spacing: 0.1em;
+  font-size: 0.66rem;
+  letter-spacing: 0.12em;
   color: var(--text-muted);
   text-transform: uppercase;
   margin-bottom: 4px;
@@ -770,12 +770,15 @@ html, body {
 .evidence-item .ev-title {
   color: var(--text-accent);
   font-weight: 700;
-  margin-bottom: 3px;
+  font-size: 0.98rem;
+  margin-bottom: 4px;
+  line-height: 1.35;
 }
 
 .evidence-item .ev-desc {
   color: var(--text-secondary);
-  line-height: 1.5;
+  font-size: 0.84rem;
+  line-height: 1.6;
 }
 
 .evidence-item.flagged { border-left-color: var(--danger); }
@@ -1240,8 +1243,8 @@ html, body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 12px;
-  margin-bottom: 10px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background:
@@ -1255,38 +1258,42 @@ html, body {
 }
 .wp-meta { display: flex; flex-direction: column; gap: 2px; }
 .wp-label {
-  font-size: 0.72rem;
-  letter-spacing: 0.22em;
+  font-size: 0.82rem;
+  letter-spacing: 0.24em;
   text-transform: uppercase;
   color: var(--text-accent);
-  font-weight: 700;
+  font-weight: 800;
 }
 .wp-engagement {
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   color: var(--text-muted);
   letter-spacing: 0.08em;
 }
 .wp-counter {
-  font-size: 0.72rem;
+  font-size: 0.76rem;
   color: var(--text-secondary);
   letter-spacing: 0.08em;
 }
-.wp-counter b { color: var(--text-accent); font-size: 0.95rem; }
+.wp-counter b {
+  color: var(--text-accent);
+  font-size: 1.05rem;
+  margin-left: 4px;
+}
 
 /* ── Working Papers card layout ───────────────────────────── */
-.wp-card { padding: 12px 14px; }
+.wp-card { padding: 14px 16px; }
 .wp-card .ev-head {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   flex-wrap: wrap;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 .wp-card .ev-id {
-  font-size: 0.72rem;
+  font-size: 0.78rem;
   font-weight: 800;
-  letter-spacing: 0.08em;
-  padding: 2px 8px;
+  letter-spacing: 0.1em;
+  padding: 3px 10px;
   border-radius: 4px;
   background: rgba(255,255,255,0.06);
   border: 1px solid var(--border);
@@ -1294,15 +1301,15 @@ html, body {
   font-family: var(--font-mono);
 }
 .wp-card .ev-tag {
-  font-size: 0.64rem;
+  font-size: 0.68rem;
   margin-bottom: 0;
 }
 .wp-card .ev-severity {
   margin-left: auto;
-  font-size: 0.64rem;
+  font-size: 0.68rem;
   font-weight: 800;
-  letter-spacing: 0.14em;
-  padding: 2px 8px;
+  letter-spacing: 0.16em;
+  padding: 3px 10px;
   border-radius: 999px;
   border: 1px solid;
 }
@@ -1329,13 +1336,14 @@ html, body {
 .wp-card .ev-foot {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px 16px;
-  margin-top: 8px;
-  padding-top: 8px;
+  gap: 8px 18px;
+  margin-top: 10px;
+  padding-top: 10px;
   border-top: 1px dashed var(--border);
-  font-size: 0.7rem;
+  font-size: 0.74rem;
   color: var(--text-muted);
   font-family: var(--font-mono);
+  line-height: 1.4;
 }
 .wp-card .ev-foot i {
   font-style: normal;
