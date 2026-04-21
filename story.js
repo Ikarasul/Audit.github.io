@@ -14,7 +14,7 @@ const DIALOGUE_NODES = {
     bgm:             'assets/audio/The_Final_Ledger_Entry_90sec.mp3',
     bgmMood:         'intro',
     characterImage:  null,
-    text:            "คุณคือ 'กาญจน์' IT Auditor รุ่นใหม่ไฟแรงแห่งบริษัท Quantum FinTech...\n\nเวลา 02:00 น. คืนวันหยุด ระบบแจ้งเตือนฉุกเฉินดังขึ้น! มีการดึงข้อมูลลูกค้า VIP ล็อตใหญ่ออกไปจากฐานข้อมูล\n\n[ รหัสคดี: GHOST-001 ]",
+    text:            "คุณคือ 'กาญจน์' IT Auditor รุ่นใหม่ไฟแรงแห่งบริษัท Quantum FinTech...\n\nเวลา 02:00 น. คืนวันหยุด ระบบแจ้งเตือนฉุกเฉินดังขึ้น! มีการดึงข้อมูลลูกค้า VIP ล็อตใหญ่ออกไปจากฐานข้อมูล\n\n[ Engagement ID: GHOST-001 | Internal Audit Report ]",
     choices: [
       { text: 'รีบเข้าสู่ระบบตรวจสอบ', next: 'prologue_1' },
     ],
@@ -60,9 +60,12 @@ const DIALOGUE_NODES = {
     onEnter: () => {
       collectEvidence({
         id:          'ev-resign-doc',
-        tag:         'เอกสาร HR',
+        tag:         'HR / Access Review',
         title:       'Terminated User ที่ยัง Active',
         description: 'MANA_Dev พ้นสภาพพนักงานไป 3 เดือนแล้ว แต่บัญชียังคง Active — ช่องโหว่ User Lifecycle Management',
+        controlArea: 'User Lifecycle Management',
+        severity:    'high',
+        source:      'HR Termination List + AD Query',
         flagged: true,
       });
     },
@@ -79,7 +82,7 @@ const DIALOGUE_NODES = {
     backgroundImage: 'assets/images/bg_computer_screen.jpg',
     bgmMood:         'sneak',
     characterImage:  'assets/images/รูปตัวละคร/พี่นุ้น/ท่าขอร้อง.png',
-    text:            'เดี๋ยวก่อนกาญจน์ — การเข้า inbox ของพนักงาน แม้จะเพื่อตรวจสอบทุจริต ก็ต้องมีขั้นตอน\n\n[ ISO 19011 — Confidentiality: ข้อมูลที่ได้มาระหว่างการตรวจสอบต้องได้รับการอนุญาตและเก็บรักษาอย่างเหมาะสม ]\n\nฉันขอ authorization ด่วนจาก CISO ได้ แต่ใช้เวลาประมาณ 30 นาที...หรือถ้าไม่รอก็ได้ เวลาคนร้ายกำลังหนีอยู่ เลือกเองนะ',
+    text:            'เดี๋ยวก่อนกาญจน์ — การเข้า inbox ของพนักงาน แม้จะเพื่อตรวจสอบทุจริต ก็ต้องมีขั้นตอน\n\n[ ISO 19011 — Confidentiality: ข้อมูลที่ได้มาระหว่างการตรวจสอบต้องได้รับการอนุญาตและเก็บรักษาอย่างเหมาะสม ]\n\nฉันขอ authorization ด่วนจาก CISO ได้ แต่ใช้เวลาประมาณ 30 นาที...หรือถ้าไม่รอก็ได้ เวลา exfiltration ยังดำเนินอยู่ — เลือกเองนะ',
     choices: [
       { text: '⏳ รอ authorization ก่อน (ช้าแต่ถูกต้อง)', next: 'chapter2_authorized' },
       { text: '⚡ ลุยเลย — ถ้าช้า log อาจโดนลบก่อน', next: 'chapter2_2' },
@@ -180,7 +183,7 @@ const DIALOGUE_NODES = {
     successScene:     'chapter3_4',
     failScene:        'bad_end',
     choices: [
-      { text: '🔍 เปิดกระดานหลักฐาน — ยื่นหลักฐานเด็ด!', action: 'presentEvidence' },
+      { text: '📑 เปิด Working Papers — ยื่นหลักฐานเด็ด!', action: 'presentEvidence' },
     ],
   },
 
@@ -291,7 +294,7 @@ const DIALOGUE_NODES = {
     backgroundImage: 'assets/images/bg_office_desk.jpg',
     bgmMood:         'victory',
     characterImage:  null,
-    text:            'รายงานผลการตรวจสอบเบื้องต้นถูกส่งตรงถึงผู้บริหารระดับสูงและฝ่ายกฎหมายเรียบร้อยแล้ว\n\nการสืบสวนภายในเริ่มดำเนินการทันทีตามข้อเท็จจริงที่คุณรวบรวมมา...\n\nคดี GHOST-001 ปิดฉากลงอย่างสมบูรณ์!',
+    text:            'รายงานผลการตรวจสอบ (Audit Report) ฉบับสมบูรณ์ถูกส่งตรงถึงผู้บริหารระดับสูงและฝ่ายกฎหมายเรียบร้อยแล้ว\n\nฝ่าย Legal / HR เข้ามาดำเนินการต่อตามข้อเท็จจริงและหลักฐานที่คุณรวบรวมไว้...\n\nEngagement GHOST-001 — Closed.',
     choices: [
       { text: '🏆 ดูผลประเมินการทำงาน IT Auditor ของคุณ', action: 'openAuditReport' },
     ],
@@ -304,7 +307,7 @@ const DIALOGUE_NODES = {
     backgroundImage: 'assets/images/bg_office_desk.jpg',
     bgmMood:         'defeat',
     characterImage:  null,
-    text:            '❌ การสืบสวนล้มเหลว!\n\nหลักฐานของคุณอ่อนเกินไป พี่โอ๊ตหาข้ออ้างปัดตกได้ทั้งหมดและแอบลบ Log ทิ้งในภายหลัง\n\nคุณถูกใบเตือนเรื่องการกล่าวหาพนักงานโดยไม่มีหลักฐานชัดเจน...\n\n( GAME OVER )',
+    text:            '❌ การตรวจสอบไม่สำเร็จ!\n\nหลักฐานที่รวบรวมได้ไม่เพียงพอ (Insufficient Audit Evidence) พี่โอ๊ตหาข้ออ้างปัดตกได้ทั้งหมดและแอบลบ Log ทิ้งในภายหลัง\n\nรายงานถูกตีกลับ และคุณถูกใบเตือนเรื่องการสรุปผลโดยไม่มีหลักฐานยืนยัน (Unsupported Opinion)...\n\n( GAME OVER )',
     choices: [
       { text: '🔄 เริ่มเกมใหม่', next: 'start' },
     ],

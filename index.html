@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ผีในระบบ — Ghost in the System</title>
-  <meta name="description" content="เกม Visual Novel สอบสวน IT Audit ค้นหาตัวคนร้ายในระบบก่อนรุ่งสาง" />
+  <meta name="description" content="เกม Visual Novel IT Audit — ตรวจสอบภายใน ค้นหาช่องโหว่และผู้กระทำภายในระบบก่อนรุ่งสาง" />
   <!-- Kanit: Thai-optimised font with full weight range -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -29,7 +29,7 @@
           <span class="menu-title-top">Ghost in the</span>
           <span class="menu-title-bottom">System</span>
         </h1>
-        <p class="menu-subtitle">ผีในระบบ — คดีตรวจสอบภายใน</p>
+        <p class="menu-subtitle">ผีในระบบ — รายงานการตรวจสอบภายใน</p>
         <div class="menu-info-strip">
           <div class="menu-info-item">
             <span class="menu-info-icon">🕵️</span>
@@ -107,7 +107,7 @@
     <!-- Top HUD -->
     <header id="hud">
       <div id="hud-left">
-        <h2 id="hud-title">แฟ้มคดี GH0ST-001</h2>
+        <h2 id="hud-title">Engagement: GH0ST-001</h2>
 
         <!-- Ethics / Integrity meter -->
         <div id="ethics-wrapper">
@@ -132,8 +132,8 @@
         <button id="btn-load" class="hud-btn" title="โหลดเกม">
           <span class="btn-icon">&#128194;</span> โหลดเกม
         </button>
-        <button id="btn-evidence" class="hud-btn" title="กระดานหลักฐาน">
-          <span class="btn-icon">&#9741;</span> กระดานหลักฐาน
+        <button id="btn-evidence" class="hud-btn" title="Working Papers — เอกสารการตรวจสอบ">
+          <span class="btn-icon">&#9741;</span> Working Papers
         </button>
         <button id="btn-audit" class="hud-btn" title="รายงานการตรวจสอบ" style="display:none">
           <span class="btn-icon">&#128196;</span> รายงานการตรวจสอบ
@@ -183,7 +183,7 @@
     <div class="modal-backdrop"></div>
     <div class="modal-panel">
       <header class="modal-header">
-        <h2 id="evidence-title">&#9741; กระดานหลักฐาน</h2>
+        <h2 id="evidence-title">&#9741; Working Papers — กระดาษทำการ</h2>
         <button class="modal-close" id="close-evidence" aria-label="ปิด">&times;</button>
       </header>
       <div class="modal-body">
@@ -205,7 +205,7 @@
       </header>
       <div class="modal-body">
         <div id="audit-content">
-          <p class="quiz-question">สรุปคดี: สาเหตุหลักที่ทำให้ข้อมูลรั่วไหลในคดีนี้คืออะไร?</p>
+          <p class="quiz-question">สรุปประเด็นตรวจพบ: สาเหตุหลักที่ทำให้ข้อมูลรั่วไหลในกรณีนี้คืออะไร?</p>
           <div class="quiz-options">
             <label class="quiz-label">
               <input type="radio" name="auditQ1" value="A"> A: ถูกโจมตีด้วย SQL Injection

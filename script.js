@@ -98,7 +98,7 @@ function startNewGame() {
   updateMuteBtn();
   els.btnAudit.style.display = 'none';
   renderEvidence();
-  addAuditEntry('เริ่มเกมใหม่ — คดีตรวจสอบภายใน', 'ok');
+  addAuditEntry('เริ่ม Engagement ใหม่ — Internal Audit Report', 'ok');
   hideMainMenu();
   goTo('start');
 }
@@ -293,27 +293,63 @@ function collectEvidence(item) {
   showToast(item);
 }
 
+const SEVERITY_META = {
+  high:   { label: 'HIGH',   cls: 'sev-high'   },
+  medium: { label: 'MEDIUM', cls: 'sev-medium' },
+  low:    { label: 'LOW',    cls: 'sev-low'    },
+};
+
 function renderEvidence() {
   selectedEvidenceItem = null;
   if (els.presentEvidenceBtn) {
     els.presentEvidenceBtn.disabled = true;
   }
-  if (!state.collectedEvidence.length) {
-    els.evidenceList.innerHTML = '<p class="empty-state">ยังไม่มีหลักฐาน</p>';
+  const count = state.collectedEvidence.length;
+  if (!count) {
+    els.evidenceList.innerHTML = `
+      <div class="wp-header">
+        <div class="wp-meta">
+          <span class="wp-label">Working Papers</span>
+          <span class="wp-engagement">GH0ST-001 · Internal Audit</span>
+        </div>
+        <div class="wp-counter">Findings: <b>0</b></div>
+      </div>
+      <p class="empty-state">ยังไม่มีรายการตรวจพบ — เก็บหลักฐานเพื่อขึ้นทะเบียน Finding</p>
+    `;
     return;
   }
   const lookup = new Map(state.evidenceItems.map(e => [e.id, e]));
-  els.evidenceList.innerHTML = '';
-  state.collectedEvidence.forEach(id => {
+  const header = `
+    <div class="wp-header">
+      <div class="wp-meta">
+        <span class="wp-label">Working Papers</span>
+        <span class="wp-engagement">GH0ST-001 · Internal Audit</span>
+      </div>
+      <div class="wp-counter">Findings: <b>${count}</b></div>
+    </div>
+  `;
+  els.evidenceList.innerHTML = header;
+  state.collectedEvidence.forEach((id, idx) => {
     const ev = lookup.get(id);
     if (!ev) return;
+    const findingId = `F-${String(idx + 1).padStart(3, '0')}`;
+    const sev = SEVERITY_META[ev.severity] || SEVERITY_META.medium;
+    const sevCls = ev.severity ? sev.cls : '';
     const card = document.createElement('div');
-    card.className = `evidence-item ${ev.flagged ? 'flagged' : ''}`;
+    card.className = `evidence-item wp-card ${ev.flagged ? 'flagged' : ''} ${sevCls}`;
     card.dataset.evidenceTitle = ev.title;
     card.innerHTML = `
-      <div class="ev-tag">${ev.tag || 'รายการ'}</div>
+      <div class="ev-head">
+        <span class="ev-id">${findingId}</span>
+        <span class="ev-tag">${ev.tag || 'Audit Item'}</span>
+        ${ev.severity ? `<span class="ev-severity ${sev.cls}">${sev.label}</span>` : ''}
+      </div>
       <div class="ev-title">${ev.title}</div>
       <div class="ev-desc">${ev.description}</div>
+      <div class="ev-foot">
+        ${ev.controlArea ? `<span class="ev-area"><i>Control Area:</i> ${ev.controlArea}</span>` : ''}
+        ${ev.source ? `<span class="ev-source"><i>Source:</i> ${ev.source}</span>` : ''}
+      </div>
     `;
     card.addEventListener('click', () => {
       document.querySelectorAll('#evidence-list .evidence-item').forEach(c => c.classList.remove('selected-evidence'));
@@ -418,7 +454,7 @@ function initAudioGraph() {
 // rate: ต่ำ = หม่น/ยืด · สูง = กระชับ/ตื่นตัว
 const BGM_MOODS = {
   menu:          { vol: 0.55, lp: 6000,  rate: 1.00 }, // เมนู — atmospheric
-  intro:         { vol: 0.55, lp: 3200,  rate: 1.00 }, // เริ่มคดี — ลึกลับ
+  intro:         { vol: 0.55, lp: 3200,  rate: 1.00 }, // เริ่ม engagement — ลึกลับ
   investigation: { vol: 0.45, lp: 2400,  rate: 0.96 }, // วิเคราะห์ log — ช้าและ focus
   discovery:     { vol: 0.70, lp: 5200,  rate: 1.02 }, // พบเบาะแส — เปิดใส ตื่นเต้น
   sneak:         { vol: 0.48, lp: 1800,  rate: 0.97 }, // แอบส่องอีเมล — อู้อี้ ระมัดระวัง
@@ -802,7 +838,7 @@ function endGame() {
 const QUIZ_QUESTIONS = [
   {
     id: 'q1',
-    question: 'ความเสี่ยงใดที่เกิดขึ้นในคดีนี้?',
+    question: 'ความเสี่ยง (Risk) หลักที่ระบุได้จากกรณีตรวจสอบนี้คืออะไร?',
     options: [
       { label: 'A', text: 'SQL Injection', correct: false },
       { label: 'B', text: 'Shared Account & Terminated User', correct: true },
@@ -815,7 +851,7 @@ const QUIZ_QUESTIONS = [
       '• บัญชีต้องถูกปิดทันทีเมื่อพ้นสภาพพนักงาน (Timely Revocation)\n\n' +
       'ช่องโหว่นี้ทำให้พี่โอ๊ตสามารถปลอมรอยดิจิทัลโดยใช้บัญชีเก่าของมานะได้',
     failMsg:
-      '❌ ยังไม่ถูกต้อง SQL Injection เป็นช่องโหว่ของฐานข้อมูล แต่ในคดีนี้ปัญหาคือ\n' +
+      '❌ ยังไม่ถูกต้อง SQL Injection เป็นช่องโหว่ของฐานข้อมูล แต่ในกรณีนี้ปัญหาคือ\n' +
       'การใช้บัญชีร่วมกัน (Shared Account) และบัญชีผู้ใช้ที่หมดสัญญาแล้วยังเปิดอยู่\n' +
       '(Terminated User) ซึ่งผิดหลัก Logical Access Control ลองอีกครั้ง!',
   },
@@ -1138,9 +1174,12 @@ els.btnConfirmLog.addEventListener('click', () => {
   closeModal(els.logMinigameModal);
   collectEvidence({
     id:          'ev-access-log',
-    tag:         'หลักฐานดิจิทัล',
+    tag:         'System Log (Digital Evidence)',
     title:       'Access Log (IP ซ้ำซ้อน)',
-    description: `OAT_Admin และ MANA_Dev ล็อกอินจาก IP ${currentSharedIp} เดียวกันในเวลาใกล้เคียงกัน`,
+    description: `OAT_Admin และ MANA_Dev ล็อกอินจาก IP ${currentSharedIp} เดียวกันในเวลาใกล้เคียงกัน — บ่งชี้ Shared Account / Account Takeover`,
+    controlArea: 'Logical Access Control',
+    severity:    'high',
+    source:      `SIEM Access Log @ IP ${currentSharedIp}`,
     flagged: true,
   });
   showGameAlert('พบหลักฐาน!', `OAT_Admin และ MANA_Dev ล็อกอินจาก IP ${currentSharedIp} เดียวกันในเวลาใกล้เคียงกัน — น่าสงสัยมาก!`, () => {
@@ -1296,9 +1335,12 @@ function judgeEmail(key, flagged) {
     showGameAlert('สืบค้นสำเร็จ!', 'พบหลักฐานมัดตัว: พี่โอ๊ตตกลงขายฐานข้อมูล VIP ให้บุคคลภายนอก (J.Doe) ผ่านอีเมล', () => {
       collectEvidence({
         id: 'email_trace',
-        tag: 'หลักฐานดิจิทัล',
-        title: 'อีเมลตกลงซื้อขายข้อมูล',
-        description: 'พบพี่โอ๊ตติดต่อส่งมอบฐานข้อมูลให้คนนอกองค์กร (J.Doe)',
+        tag: 'Email Forensics',
+        title: 'อีเมลตกลงซื้อขายข้อมูล VIP',
+        description: 'พบพี่โอ๊ตติดต่อส่งมอบฐานข้อมูลลูกค้า VIP ให้บุคคลภายนอกองค์กร (J.Doe) — Data Exfiltration + Fraud',
+        controlArea: 'Data Exfiltration / Fraud',
+        severity:    'high',
+        source:      'Exchange Mail Archive',
         flagged: true,
       });
       closeModal(els.emailModal);
@@ -1365,7 +1407,7 @@ function evaluatePrinciples(ctx) {
   if (mercyResponse === 'soft')
     r.integrity = { status: 'fail', comment: 'ปิดเรื่องให้ผู้กระทำผิด — ละเมิดความซื่อสัตย์โดยตรง' };
   else if (ethics >= 70)
-    r.integrity = { status: 'pass', comment: 'รักษาความซื่อสัตย์ได้ดีตลอดคดี' };
+    r.integrity = { status: 'pass', comment: 'รักษาความซื่อสัตย์ได้ดีตลอด engagement' };
   else if (ethics >= 40)
     r.integrity = { status: 'warn', comment: 'บางจังหวะกระทบความซื่อสัตย์ ควรระวังให้มากขึ้น' };
   else
@@ -1413,7 +1455,7 @@ function evaluatePrinciples(ctx) {
   else if (collectedCount >= 3)
     r.evidence_based = { status: 'pass', comment: `เก็บหลักฐาน ${collectedCount} ชิ้นครบ ใช้ยืนยันข้อสรุปได้` };
   else if (collectedCount >= 2)
-    r.evidence_based = { status: 'warn', comment: 'เก็บหลักฐานได้บางส่วน ยังไม่ครอบคลุมทั้งคดี' };
+    r.evidence_based = { status: 'warn', comment: 'เก็บหลักฐานได้บางส่วน ยังไม่ครอบคลุมทั้ง scope' };
   else
     r.evidence_based = { status: 'fail', comment: 'หลักฐานไม่เพียงพอสำหรับข้อสรุป' };
 
@@ -1423,7 +1465,7 @@ function evaluatePrinciples(ctx) {
   else if (quizScore >= 50)
     r.risk_based = { status: 'warn', comment: 'ระบุความเสี่ยงได้ แต่การตัดสินใจไม่สมดุลกับระดับความเสี่ยง' };
   else
-    r.risk_based = { status: 'fail', comment: 'ยังระบุความเสี่ยงหลักของคดีนี้ไม่ถูกต้อง' };
+    r.risk_based = { status: 'fail', comment: 'ยังระบุความเสี่ยงหลักของกรณีตรวจสอบนี้ไม่ถูกต้อง' };
 
   return r;
 }

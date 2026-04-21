@@ -1235,6 +1235,115 @@ html, body {
   animation: ev-item-in 0.25s ease;
 }
 
+/* ── Working Papers header ────────────────────────────────── */
+.wp-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background:
+    repeating-linear-gradient(
+      135deg,
+      rgba(255,255,255,0.02) 0 6px,
+      transparent 6px 12px
+    ),
+    var(--bg-raised);
+  font-family: var(--font-mono);
+}
+.wp-meta { display: flex; flex-direction: column; gap: 2px; }
+.wp-label {
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-accent);
+  font-weight: 700;
+}
+.wp-engagement {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+}
+.wp-counter {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  letter-spacing: 0.08em;
+}
+.wp-counter b { color: var(--text-accent); font-size: 0.95rem; }
+
+/* ── Working Papers card layout ───────────────────────────── */
+.wp-card { padding: 12px 14px; }
+.wp-card .ev-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+.wp-card .ev-id {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border);
+  color: var(--text-accent);
+  font-family: var(--font-mono);
+}
+.wp-card .ev-tag {
+  font-size: 0.64rem;
+  margin-bottom: 0;
+}
+.wp-card .ev-severity {
+  margin-left: auto;
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid;
+}
+.wp-card .ev-severity.sev-high {
+  color: #fecaca;
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.55);
+}
+.wp-card .ev-severity.sev-medium {
+  color: #fde68a;
+  background: rgba(234, 179, 8, 0.15);
+  border-color: rgba(234, 179, 8, 0.55);
+}
+.wp-card .ev-severity.sev-low {
+  color: #bbf7d0;
+  background: rgba(34, 197, 94, 0.15);
+  border-color: rgba(34, 197, 94, 0.55);
+}
+
+.wp-card.sev-high   { border-left-color: #ef4444; }
+.wp-card.sev-medium { border-left-color: #eab308; }
+.wp-card.sev-low    { border-left-color: #22c55e; }
+
+.wp-card .ev-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+.wp-card .ev-foot i {
+  font-style: normal;
+  color: var(--text-accent);
+  margin-right: 4px;
+  letter-spacing: 0.04em;
+}
+
 /* ── Responsive ───────────────────────────────────────────── */
 @media (max-width: 600px) {
   :root {
