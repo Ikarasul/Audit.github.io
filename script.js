@@ -743,6 +743,7 @@ function renderChoices(choices) {
         return;
       }
       if (choice.action === 'accusePerson') {
+        state.flags.finalChoice = 'accuse';
         adjustEthics(-30);
         showGameAlert(
           'ผิดหลักจรรยาบรรณวิชาชีพ!',
@@ -752,6 +753,7 @@ function renderChoices(choices) {
         return;
       }
       if (choice.action === 'reportFacts') {
+        state.flags.finalChoice = 'facts';
         adjustEthics(+10);
         showGameAlert(
           'ยอดเยี่ยมมาก!',
@@ -1303,6 +1305,7 @@ function judgeEmail(key, flagged) {
       goTo('chapter3_1');
     }, 'success');
   } else if (flagged && !e.suspect) {
+    state.flags.wrongEmailFlags = (state.flags.wrongEmailFlags || 0) + 1;
     adjustEthics(-5);
     item.classList.add('flagged-bad');
     showGameAlert('ผิดพลาด!', 'การยื่นอีเมลปกติเป็นหลักฐานเท่ากับการกล่าวหาโดยไม่มีมูล\nความซื่อสัตย์ลดลง -5\n\nลองอ่านอีเมลฉบับอื่นให้ละเอียด', null, 'danger');
@@ -1339,37 +1342,198 @@ els.submitAuditBtn.addEventListener('click', () => {
   showFinalScore();
 });
 
+// ─── 7 Pillars of Trust (ISO 19011) ─────────────────────────
+const AUDIT_PRINCIPLES = [
+  { key: 'integrity',        th: 'ความซื่อสัตย์',             en: 'Integrity',               icon: '🛡' },
+  { key: 'fair_presentation', th: 'การนำเสนออย่างเป็นธรรม',   en: 'Fair Presentation',       icon: '⚖' },
+  { key: 'due_care',         th: 'ความเอาใจใส่อย่างมืออาชีพ', en: 'Due Professional Care',   icon: '🎓' },
+  { key: 'confidentiality',  th: 'การรักษาความลับ',          en: 'Confidentiality',         icon: '🔒' },
+  { key: 'independence',     th: 'ความเป็นอิสระ',             en: 'Independence',            icon: '👤' },
+  { key: 'evidence_based',   th: 'ยึดหลักฐานเป็นหลัก',        en: 'Evidence-based Approach', icon: '🔍' },
+  { key: 'risk_based',       th: 'ยึดความเสี่ยงเป็นหลัก',     en: 'Risk-based Approach',     icon: '⚠️' },
+];
+
+function evaluatePrinciples(ctx) {
+  const { ethics, quizScore, collectedCount, finalChoice, wrongEmailFlags } = ctx;
+  const r = {};
+
+  if (ethics >= 70)      r.integrity = { status: 'pass', comment: 'รักษาความซื่อสัตย์ได้ดีตลอดคดี' };
+  else if (ethics >= 40) r.integrity = { status: 'warn', comment: 'บางจังหวะกระทบความซื่อสัตย์ ควรระวังให้มากขึ้น' };
+  else                   r.integrity = { status: 'fail', comment: 'การตัดสินใจหลายครั้งไม่สอดคล้องกับหลักซื่อสัตย์' };
+
+  if (finalChoice === 'facts')       r.fair_presentation = { status: 'pass', comment: 'รายงานข้อเท็จจริงโดยไม่ชี้ตัว — ถูกต้องตามหลัก' };
+  else if (finalChoice === 'accuse') r.fair_presentation = { status: 'fail', comment: 'ชี้ตัวผู้กระทำผิดในรายงาน — เป็นหน้าที่ฝ่ายสอบสวน/กฎหมาย' };
+  else                               r.fair_presentation = { status: 'warn', comment: 'ยังไม่มีข้อมูลในการตัดสิน' };
+
+  if (ethics >= 50 && wrongEmailFlags === 0)
+    r.due_care = { status: 'pass', comment: 'ใช้ดุลยพินิจรอบคอบ ไม่ผิดพลาดในการประเมิน' };
+  else if (wrongEmailFlags > 0)
+    r.due_care = { status: 'warn', comment: `ชี้อีเมลปกติว่าน่าสงสัย ${wrongEmailFlags} ครั้ง — ควรอ่านเนื้อหาให้ละเอียดก่อนสรุป` };
+  else
+    r.due_care = { status: 'warn', comment: 'ควรพิจารณาให้รอบคอบกว่านี้' };
+
+  r.confidentiality = { status: 'pass', comment: 'ใช้สิทธิ์เข้าถึงข้อมูลเพื่อการตรวจสอบเท่านั้น' };
+  r.independence    = { status: 'pass', comment: 'ไม่มีผลประโยชน์ทับซ้อนกับผู้ถูกตรวจสอบ' };
+
+  if (collectedCount >= 3)      r.evidence_based = { status: 'pass', comment: `เก็บหลักฐาน ${collectedCount} ชิ้นครบ ใช้ยืนยันข้อสรุปได้` };
+  else if (collectedCount >= 2) r.evidence_based = { status: 'warn', comment: 'เก็บหลักฐานได้บางส่วน ยังไม่ครอบคลุมทั้งคดี' };
+  else                          r.evidence_based = { status: 'fail', comment: 'หลักฐานไม่เพียงพอสำหรับข้อสรุป' };
+
+  if (quizScore >= 50 && ethics >= 50) r.risk_based = { status: 'pass', comment: 'วิเคราะห์ความเสี่ยงหลัก (Shared Account + Terminated User) ได้ถูกต้อง' };
+  else if (quizScore >= 50)             r.risk_based = { status: 'warn', comment: 'ระบุความเสี่ยงได้ แต่การตัดสินใจไม่สมดุลกับระดับความเสี่ยง' };
+  else                                  r.risk_based = { status: 'fail', comment: 'ยังระบุความเสี่ยงหลักของคดีนี้ไม่ถูกต้อง' };
+
+  return r;
+}
+
+function getAuditVerdict(totalScore) {
+  if (totalScore >= 90) return {
+    th: 'มีประสิทธิผล (Effective)',
+    en: 'Clean / Unqualified Opinion',
+    icon: '✅', color: '#10b981',
+    desc: 'ระบบการควบคุมภายใน "เพียงพอ" และ "ปฏิบัติตาม" ได้ตามวัตถุประสงค์ — ความเสี่ยงโดยรวมอยู่ในระดับต่ำ',
+  };
+  if (totalScore >= 70) return {
+    th: 'มีเงื่อนไข (Qualified — Clean)',
+    en: 'Qualified Opinion',
+    icon: '⚠️', color: '#eab308',
+    desc: 'โดยรวมมีประสิทธิผล "แต่" พบบางประเด็นที่ควรปรับปรุง หรือหลักฐานยังไม่ครบถ้วนในบางส่วน',
+  };
+  if (totalScore >= 50) return {
+    th: 'มีเงื่อนไข (Qualified — Weak)',
+    en: 'Qualified with Reservations',
+    icon: '⚠️', color: '#f59e0b',
+    desc: 'พบช่องโหว่ที่มีสาระสำคัญ ต้องปรับปรุงการควบคุมและกระบวนการตรวจสอบอย่างจริงจัง',
+  };
+  return {
+    th: 'ไม่มีประสิทธิผล (Ineffective)',
+    en: 'Adverse Opinion',
+    icon: '❌', color: '#ef4444',
+    desc: 'ระบบการควบคุม "ไม่เพียงพอ" หรือ "ไม่ปฏิบัติตาม" มีความเสี่ยงสูงมาก ต้องทบทวนทั้งกระบวนการ',
+  };
+}
+
+function getRecommendations(ctx) {
+  const recs = [];
+  if (ctx.finalChoice === 'accuse') {
+    recs.push({ priority: 'high',
+      title: '🚫 หลีกเลี่ยงการชี้ตัวผู้กระทำผิดในรายงานตรวจสอบ',
+      body: 'หน้าที่ของ IT Auditor คือนำเสนอ "ข้อเท็จจริงและหลักฐาน" ปล่อยให้ฝ่ายสอบสวน/กฎหมาย/HR เป็นผู้ตัดสิน — ตามหลัก Fair Presentation',
+    });
+  }
+  if (ctx.ethics < 50) {
+    recs.push({ priority: 'high',
+      title: '⚖ ทบทวนหลัก Integrity — รากฐานของวิชาชีพ',
+      body: 'การตัดสินใจที่กระทบจริยธรรมแม้เพียงเล็กน้อย ก็บั่นทอนความน่าเชื่อถือของรายงานทั้งฉบับ',
+    });
+  }
+  if (ctx.quizScore < 50) {
+    recs.push({ priority: 'medium',
+      title: '📚 ศึกษาเพิ่ม: Logical Access Control',
+      body: 'Shared Account + Terminated User เป็นช่องโหว่ที่พบบ่อย — ผู้ใช้ต้องมี Unique ID และบัญชีต้อง revoke ทันทีเมื่อพ้นสภาพพนักงาน',
+    });
+  }
+  if (ctx.wrongEmailFlags > 0) {
+    recs.push({ priority: 'medium',
+      title: '🔎 อ่านเอกสารให้ละเอียด — Due Professional Care',
+      body: 'อีเมลจาก external domain ไม่ได้แปลว่าทุจริตเสมอไป (บิล AWS ก็ external) ต้องดูเนื้อหาและบริบทประกอบ',
+    });
+  }
+  if (ctx.collectedCount < 3) {
+    recs.push({ priority: 'medium',
+      title: '📋 รวบรวมหลักฐานให้ครบก่อนสรุป — Evidence-based',
+      body: 'ข้อสรุปใน Audit Report ต้องมีหลักฐานรองรับทุกประเด็น หลักฐานไม่ครบ = ข้อสรุปอ่อน = เสี่ยงถูกปัดตก',
+    });
+  }
+  recs.push({ priority: 'info',
+    title: '💡 หัวใจของ IT Auditor',
+    body: '"Clear & Useful" — ข้อสรุปต้องชัดเจน ไม่เป็นกลางจนไม่มีประโยชน์ เพื่อให้ผู้บริหารนำไปปรับปรุงองค์กรได้จริงทุกจุด',
+  });
+  return recs;
+}
+
 function showFinalScore() {
   els.gameContainer.style.display = 'none';
   els.finalScoreScreen.classList.remove('hidden');
 
-  const finalEthics = Math.min(Math.max(state.ethicsMeter, 0), 50);
-  const totalScore  = finalEthics + quizScore;
+  const ethics       = Math.max(0, Math.min(100, state.ethicsMeter));
+  const finalEthics  = Math.round(ethics / 2);
+  const totalScore   = finalEthics + quizScore;
 
-  let gradeLetter = '';
-  let evalMessage = '';
+  const ctx = {
+    ethics, quizScore,
+    finalChoice:     state.flags.finalChoice,
+    collectedCount:  state.collectedEvidence.length,
+    wrongEmailFlags: state.flags.wrongEmailFlags || 0,
+  };
 
-  if (totalScore >= 90) {
-    gradeLetter = 'S';
-    evalMessage = 'IT Auditor ระดับพระกาฬ! สมบูรณ์แบบทั้งทักษะและจริยธรรม';
-  } else if (totalScore >= 70) {
-    gradeLetter = 'A';
-    evalMessage = 'ทำงานได้ดีมาก! วิเคราะห์เฉียบขาด';
-  } else if (totalScore >= 50) {
-    gradeLetter = 'B';
-    evalMessage = 'ผ่านมาตรฐาน แต่ต้องระวังการตัดสินใจให้รอบคอบกว่านี้';
-  } else {
-    gradeLetter = 'F';
-    evalMessage = 'คุณละเลยจริยธรรมวิชาชีพ! ต้องทบทวนตัวเองด่วน';
-  }
+  const verdict      = getAuditVerdict(totalScore);
+  const principles   = evaluatePrinciples(ctx);
+  const recommendations = getRecommendations(ctx);
+
+  const statusMeta = {
+    pass: { icon: '✓', label: 'ปฏิบัติตาม',    cls: 'p-pass' },
+    warn: { icon: '⚠', label: 'ควรปรับปรุง',   cls: 'p-warn' },
+    fail: { icon: '✗', label: 'ละเมิด',        cls: 'p-fail' },
+  };
 
   els.scoreDetails.innerHTML = `
-    <div class="score-card">
-      <div class="grade-display grade-${gradeLetter}">${gradeLetter}</div>
-      <div class="score-row"><span>จริยธรรม (Ethics):</span> <span>${finalEthics} / 50</span></div>
-      <div class="score-row"><span>วิเคราะห์คดี (Audit):</span> <span>${quizScore} / 50</span></div>
-      <div class="total-row"><span>คะแนนรวม:</span> <span>${totalScore} / 100</span></div>
-      <p class="eval-message">${evalMessage}</p>
+    <div class="audit-verdict" style="--verdict-color: ${verdict.color}">
+      <div class="verdict-icon">${verdict.icon}</div>
+      <div class="verdict-text">
+        <div class="verdict-label">AUDIT CONCLUSION · ผลการตรวจสอบ</div>
+        <div class="verdict-title">${verdict.th}</div>
+        <div class="verdict-en">${verdict.en}</div>
+      </div>
+      <div class="verdict-score">${totalScore}<span>/100</span></div>
+    </div>
+    <p class="verdict-desc">${verdict.desc}</p>
+
+    <div class="score-breakdown">
+      <div class="bd-row">
+        <span class="bd-label">🛡 ความซื่อสัตย์ (Integrity)</span>
+        <div class="bd-bar"><div class="bd-bar-fill" style="width:${ethics}%"></div></div>
+        <span class="bd-val">${finalEthics}/50</span>
+      </div>
+      <div class="bd-row">
+        <span class="bd-label">📊 วิเคราะห์ความเสี่ยง (Risk Analysis)</span>
+        <div class="bd-bar"><div class="bd-bar-fill" style="width:${quizScore * 2}%"></div></div>
+        <span class="bd-val">${quizScore}/50</span>
+      </div>
+      <div class="bd-row">
+        <span class="bd-label">🔎 หลักฐานที่รวบรวม (Evidence)</span>
+        <div class="bd-bar"><div class="bd-bar-fill" style="width:${Math.min(100, ctx.collectedCount * 33.3)}%"></div></div>
+        <span class="bd-val">${ctx.collectedCount} ชิ้น</span>
+      </div>
+    </div>
+
+    <h3 class="section-heading">🏛 7 Pillars of Trust — หลักการที่คุณปฏิบัติ</h3>
+    <div class="principles-grid">
+      ${AUDIT_PRINCIPLES.map(p => {
+        const pr = principles[p.key];
+        const m  = statusMeta[pr.status];
+        return `
+          <div class="principle-item ${m.cls}">
+            <div class="p-icon">${p.icon}</div>
+            <div class="p-head">
+              <div class="p-name">${p.th}</div>
+              <div class="p-en">${p.en}</div>
+            </div>
+            <div class="p-status">${m.icon} ${m.label}</div>
+            <div class="p-comment">${pr.comment}</div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+
+    <h3 class="section-heading">📋 ข้อเสนอแนะเพื่อการพัฒนา (Recommendations)</h3>
+    <div class="recommendations">
+      ${recommendations.map(r => `
+        <div class="rec-item rec-${r.priority}">
+          <div class="rec-title">${r.title}</div>
+          <div class="rec-body">${r.body}</div>
+        </div>
+      `).join('')}
     </div>
   `;
 }
