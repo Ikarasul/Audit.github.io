@@ -250,6 +250,7 @@ html, body {
   justify-content: center;
   align-items: flex-end;
   z-index: 4;
+  pointer-events: none;
 }
 
 #character-wrapper {
@@ -260,8 +261,9 @@ html, body {
 
 #character-image {
   max-width: 90vw;
-  max-height: 75vh;
+  max-height: 88vh;
   object-fit: contain;
+  object-position: center bottom;
   transition: opacity 0.18s ease;
   filter: drop-shadow(0 0 18px rgba(0, 212, 255, 0.15));
   animation: idle-breathe 3.6s ease-in-out infinite;
