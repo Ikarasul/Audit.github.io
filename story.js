@@ -179,7 +179,7 @@ const DIALOGUE_NODES = {
     characterImage:   'assets/images/รูปตัวละคร/โอ๊ดด/ท่าความแตก.png',
     animation:        'shake',
     text:             'หลักฐานอะไร!? อย่ามากล่าวหากันลอยๆ นะน้อง พี่ทำงานที่นี่มา 5 ปี ไม่เคยมีประวัติเสีย ถ้าไม่มีหลักฐานชัดเจน พี่จะฟ้อง HR นะ!',
-    requiredEvidence: 'อีเมลตกลงซื้อขายข้อมูล',
+    requiredEvidence: 'อีเมลตกลงซื้อขายข้อมูล VIP',
     successScene:     'chapter3_4',
     failScene:        'bad_end',
     choices: [
